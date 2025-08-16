@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Voice Activity Detector</title>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Simple Voice Activity Detector</h1>
+        <p>This page uses the vad.js library to detect when you speak into your microphone.</p>
+        
+        <div id="statusIndicator" class="status inactive">Microphone not active</div>
+        
+        <button id="startButton" disabled>Start Listening</button>
+        
+        <div id="transcriptContainer">
+            <p id="transcript">Voice activity will be logged here...</p>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

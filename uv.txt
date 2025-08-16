@@ -1,0 +1,24 @@
+> uv venv
+
+This creates a .venv folder in the project.
+No need to activate it manually.
+
+> uv pip install torch --index-url https://download.pytorch.org/whl/cu124
+> uv pip install torch --index-url https://download.pytorch.org/whl/cu124 --force-reinstall
+> uv pip install torchvision --index-url https://download.pytorch.org/whl/cu124 --force-reinstall
+> uv pip install requests
+> uv pip install numpy
+> uv pip install scipy
+> uv pip install phonemizer
+> uv pip install munch
+> uv pip install transformers
+> uv pip install soundfile
+
+> uv pip install flask
+
+Installs inside .venv automatically.
+
+> uv run app.py
+
+Works without activating .venv.
+
