@@ -18,28 +18,22 @@ def index():
 
 @app.route('/process_audio', methods=['POST'])
 def process_audio():
-    if 'audio' not in request.files:
-        return Response("No audio file received", status=400)
+    audio_bytes = request.data
     
-    audio_file = request.files['audio']
-    audio_bytes = audio_file.read()
+    if not audio_bytes:
+        return Response("No audio data received", status=400)
     
-    # Convert bytes to float32 array
-    float_data = np.frombuffer(audio_bytes, dtype=np.float32)
+    float_data = np.frombuffer(audio_bytes, dtype=np.float32) # Convert bytes to float32 array
     
-    # Process the audio
     sample_rate = 16000  # Expected sample rate for model
     
-    # Basic preprocessing
-    # Ensure audio is float32
     if float_data.dtype != np.float32:
-        float_data = float_data.astype(np.float32)
+        float_data = float_data.astype(np.float32) # Ensure audio is float32
     
-    # Normalize if audio level is too high
     if np.max(np.abs(float_data)) > 1.0:
+        # Normalize if audio level is too high
         float_data = float_data / np.max(np.abs(float_data))
         
-    # Skip if audio is too quiet
     if np.max(np.abs(float_data)) < 0.01:
         print("Audio too quiet, skipping transcription")
         return Response("Audio too quiet", status=400)
@@ -47,7 +41,6 @@ def process_audio():
     # Convert to tensor for Moonshine STT
     speech_tensor = torch.FloatTensor(float_data).to(device)
     
-    # Process with Moonshine STT (Speech-to-Text)
     inputs = processor(
         speech_tensor, 
         sampling_rate=sample_rate, 
