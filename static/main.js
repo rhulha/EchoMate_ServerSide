@@ -21,15 +21,16 @@ async function sendAudioToServer(audioData) {
     try {
         updateStatus("active", "Processing audio...");
         
-        // Create a FormData object and append the audio blob
-        const formData = new FormData();
+        // Create a blob directly from the audio data
         const audioBlob = new Blob([audioData], { type: 'audio/wav' });
-        formData.append('audio', audioBlob);
         
         // Send to Flask backend
         const response = await fetch('/process_audio', {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'audio/wav'
+            },
+            body: audioBlob
         });
         
         if (response.ok) {
