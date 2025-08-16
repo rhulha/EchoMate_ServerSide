@@ -39,18 +39,15 @@ def process_audio():
         return Response("Audio too quiet", status=400)
         
     # Convert to tensor for Moonshine STT
+    # This step might not be needed.
     speech_tensor = torch.FloatTensor(float_data).to(device)
     
-    inputs = processor(
-        speech_tensor, 
-        sampling_rate=sample_rate, 
-        return_tensors="pt"
-    ).to(device)
+    inputs = processor(speech_tensor,sampling_rate=sample_rate,return_tensors="pt").to(device)
     
     with torch.no_grad():
         outputs = stt_model.generate(
             **inputs,  # Unpack inputs as keyword arguments
-            max_new_tokens=128,
+            max_new_tokens=228, # this line is not in the example docs
         )
     
     transcription = processor.batch_decode(outputs, skip_special_tokens=True)[0]
