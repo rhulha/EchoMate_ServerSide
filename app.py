@@ -1,11 +1,9 @@
-import os
 from flask import Flask, render_template, request, Response
 import torch
 import numpy as np
-import time
 from transformers import AutoProcessor, AutoModelForSpeechSeq2Seq
 
-app = Flask(__name__, static_url_path='/static', static_folder='static')
+app = Flask(__name__, static_url_path='/', static_folder='static')
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
