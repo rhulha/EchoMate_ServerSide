@@ -34,8 +34,24 @@ async function sendAudioToServer(audioData) {
         });
         
         if (response.ok) {
-            const transcription = await response.text();
-            logActivity(`Transcription: ${transcription}`);
+            const contentType = response.headers.get('Content-Type');
+            
+            if (contentType && contentType.includes('audio/wav')) {
+                // Handle audio response
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                // Create audio element and play response
+                const audioElement = new Audio(audioUrl);
+                audioElement.onloadedmetadata = () => {
+                    logActivity(`Playing audio response (${Math.round(audioElement.duration)}s)`);
+                };
+                audioElement.play();
+            } else {
+                // Handle text response (for backward compatibility or error messages)
+                const transcription = await response.text();
+                logActivity(`Response: ${transcription}`);
+            }
         } else {
             const errorText = await response.text();
             logActivity(`Error: ${errorText}`);
