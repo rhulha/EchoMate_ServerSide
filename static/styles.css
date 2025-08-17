@@ -42,13 +42,7 @@ button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
 }
-#transcriptContainer {
-    margin-top: 20px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    width: 80%;
-}
+
 .settings {
     width: 80%;
     margin: 15px 0;
@@ -139,6 +133,4 @@ button:disabled {
     background-color: #ff7043;
 }
 
-#transcriptContainer h2 {
-    margin-top: 0;
-}
+

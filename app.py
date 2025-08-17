@@ -144,6 +144,13 @@ def process_audio():
                         voice_cache[DEFAULT_VOICE] = voicepack
                     else:
                         voicepack = voice_cache[DEFAULT_VOICE]
+            
+            import re
+            # Remove Markdown formatting for better speech
+            response_text = re.sub(r'\*\*(.*?)\*\*', r'\1', response_text)  # Bold
+            response_text = re.sub(r'\*(.*?)\*', r'\1', response_text)      # Italic
+            response_text = re.sub(r'`(.*?)`', r'\1', response_text)        # Code
+            response_text = re.sub(r'~~(.*?)~~', r'\1', response_text)      # Strikethrough
 
             audio, _ = generate(tts_model, response_text, voicepack, lang=voice_name[0])
 

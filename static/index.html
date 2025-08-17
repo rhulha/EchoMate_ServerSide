@@ -3,14 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Voice Activity Detector</title>
+    <title>EchoMate - Voice Assistant Web Application</title>
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Simple Voice Activity Detector</h1>
-        <p>This page uses the vad.js library to detect when you speak into your microphone.</p>
+        <h1>EchoMate - Voice Assistant Web Application</h1>
+        <p>
+            EchoMate is a web application that enables speech-to-speech conversations using 
+            <a href="https://github.com/moonshine-ai/moonshine" target="_blank" rel="noopener">Moonshine</a> for speech recognition, 
+            <a href="https://github.com/hexgrad/kokoro" target="_blank" rel="noopener">Kokoro</a> for text-to-speech synthesis, and <a href="https://github.com/ricky0123/vad" target="_blank" rel="noopener">Silero-VAD</a> for voice activity detection.
+        </p>
         
         <div id="statusIndicator" class="status inactive">Microphone not active</div>
         
@@ -45,11 +49,6 @@
         <div class="conversation-container">
             <h2>Conversation History</h2>
             <div id="conversationHistory" class="conversation-history"></div>
-        </div>
-        
-        <div id="transcriptContainer">
-            <h2>Activity Log</h2>
-            <p id="transcript">Voice activity will be logged here...</p>
         </div>
     </div>
 

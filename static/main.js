@@ -5,11 +5,6 @@ let vad = null;
 let isReady = false;
 let conversationHistory = [];
 
-function logActivity(message) {
-    const timeString = new Date().toLocaleTimeString();
-    $("#transcript").append(`<br>${timeString}: ${message}`);
-}
-
 function updateStatus(status, message) {
     $("#statusIndicator")
         .removeClass("inactive active listening")
@@ -38,7 +33,6 @@ async function sendAudioToServer(audioData) {
         // Add conversation history to the request
         formData.append('conversation_history', JSON.stringify(conversationHistory));
         
-        logActivity(`Using voice: ${selectedVoice}`);
         const response = await fetch('/process_audio', {
             method: 'POST',
             body: formData
@@ -62,11 +56,8 @@ async function sendAudioToServer(audioData) {
                     if (userTranscription) {
                         const decodedTranscription = decodeURIComponent(userTranscription);
                         conversationHistory.push({ role: "user", content: decodedTranscription });
-                        logActivity(`You said: ${decodedTranscription}`);
                     }
                     
-                    logActivity(`Response: ${decodedResponse}`);
-
                     conversationHistory.push({ role: "assistant", content: decodedResponse });
                     
                     // Display conversation history in the UI
@@ -74,7 +65,7 @@ async function sendAudioToServer(audioData) {
                 }
                 
                 audioElement.onloadedmetadata = () => {
-                    logActivity(`Playing audio response (${Math.round(audioElement.duration)}s)`);
+                    // Audio loaded
                 };
                 
                 audioElement.onended = () => {
@@ -84,17 +75,16 @@ async function sendAudioToServer(audioData) {
                 updateStatus("active", "Playing response...");
                 audioElement.play();
             } else {
-                logActivity(`Error: ${response.statusText}`);
+                console.error(`Error: ${response.statusText}`);
                 resumeListening();
             }
         } else {
             const errorText = await response.text();
-            logActivity(`Error: ${errorText}`);
+            console.error(`Error: ${errorText}`);
             resumeListening();
         }
     } catch (error) {
         console.error("Error sending audio:", error);
-        logActivity(`Error: ${error.message}`);
         resumeListening();
     }
 }
@@ -105,17 +95,15 @@ async function initializeVAD() {
             onSpeechStart: () => {
                 console.log("Speech start detected");
                 updateStatus("active", "Speech detected!");
-                logActivity("Speech started");
             },
             onSpeechEnd: (audio) => {
                 console.log("Speech end detected");
                 updateStatus("listening", "Processing...");
-                logActivity("Speech ended");
                 console.log("Audio length:", audio.length);
                 sendAudioToServer(audio.buffer);
             },
             onVADMisfire: () => {
-                logActivity("VAD misfire (false positive)");
+                console.log("VAD misfire (false positive)");
             }
         });
         
@@ -123,7 +111,6 @@ async function initializeVAD() {
         console.log("VAD initialized successfully");
     } catch (error) {
         console.error("Error initializing VAD:", error);
-        logActivity("Error initializing VAD: " + error.message);
     }
 }
 
@@ -133,7 +120,6 @@ function resumeListening() {
         vad.start();
         $("#startButton").text("Stop Listening");
         updateStatus("listening", "Listening...");
-        logActivity("Resumed listening");
     }
 }
 
@@ -163,20 +149,17 @@ function setupEventListeners() {
             vad.start();
             $(this).text("Stop Listening");
             updateStatus("listening", "Listening...");
-            logActivity("Started listening");
         } else if (isReady && vad) {
             isReady = false;
             vad.pause();
             $(this).text("Start Listening");
             updateStatus("inactive", "Microphone paused");
-            logActivity("Stopped listening");
         }
     });
     
     $("#clearConversationButton").on("click", function() {
         conversationHistory = [];
         updateConversationDisplay();
-        logActivity("Conversation history cleared");
     });
 }
 
