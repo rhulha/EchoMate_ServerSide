@@ -21,9 +21,12 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 print("Loading Kokoro model...")
 tts_model = build_model('pth/kokoro-v0_19.pth', device)
-VOICE_NAME = 'af_bella'
-VOICEPACK = torch.load(f'voices/{VOICE_NAME}.pt', weights_only=True).to(device)
-print(f'Loaded voice: {VOICE_NAME}')
+DEFAULT_VOICE = 'af_bella'
+# We'll load voices dynamically based on user selection
+print(f'Default voice: {DEFAULT_VOICE}')
+
+# Cache for loaded voices to avoid reloading them every time
+voice_cache = {}
 
 app = Flask(__name__, static_url_path='/', static_folder='static')
 
@@ -46,12 +49,25 @@ def is_llm_api_reachable():
     
 @app.route('/process_audio', methods=['POST'])
 def process_audio():
-    audio_bytes = request.data
-    
-    if not audio_bytes:
-        return Response("No audio data received", status=400)
-    
-    float_data = np.frombuffer(audio_bytes, dtype=np.float32) # Convert bytes to float32 array
+    try:
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            voice_name = request.form.get('voice', DEFAULT_VOICE)
+            system_prompt = request.form.get('system_prompt', "You are a helpful assistant.")
+            audio_file = request.files.get('audio')
+            if not audio_file:
+                return Response("No audio file received", status=400)
+            audio_bytes = audio_file.read()
+        else:
+            return Response("Invalid audio data format", status=400)
+
+        if not audio_bytes:
+            return Response("No audio data received", status=400)
+        
+        print(f"Using voice: {voice_name}, System prompt: {system_prompt}")
+        float_data = np.frombuffer(audio_bytes, dtype=np.float32) # Convert bytes to float32 array
+    except Exception as e:
+        print(f"Error processing request: {str(e)}")
+        return Response(f"Error processing request: {str(e)}", status=400)
     
     if float_data.dtype != np.float32:
         float_data = float_data.astype(np.float32) # Ensure audio is float32
@@ -84,7 +100,7 @@ def process_audio():
         payload = {
             "model": "local-model",
             "messages": [
-                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": transcription}
             ],
             "temperature": 0.7
@@ -96,7 +112,25 @@ def process_audio():
             response_json = response.json()
             response_text = response_json['choices'][0]['message']['content']
 
-            audio, _ = generate(tts_model, response_text, VOICEPACK, lang=VOICE_NAME[0])
+            # Get or load the voice
+            if voice_name in voice_cache:
+                voicepack = voice_cache[voice_name]
+            else:
+                try:
+                    voicepack = torch.load(f'voices/{voice_name}.pt', weights_only=True).to(device)
+                    voice_cache[voice_name] = voicepack
+                    print(f'Loaded voice: {voice_name}')
+                except Exception as e:
+                    print(f"Error loading voice {voice_name}: {str(e)}")
+                    # Fall back to default voice
+                    voice_name = DEFAULT_VOICE
+                    if DEFAULT_VOICE not in voice_cache:
+                        voicepack = torch.load(f'voices/{DEFAULT_VOICE}.pt', weights_only=True).to(device)
+                        voice_cache[DEFAULT_VOICE] = voicepack
+                    else:
+                        voicepack = voice_cache[DEFAULT_VOICE]
+
+            audio, _ = generate(tts_model, response_text, voicepack, lang=voice_name[0])
 
             if audio is None:
                 print("Audio generation failed")

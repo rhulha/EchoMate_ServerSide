@@ -20,35 +20,31 @@ function updateStatus(status, message) {
 async function sendAudioToServer(audioData) {
     try {
         updateStatus("active", "Processing audio...");
-        
-        // Create a blob directly from the audio data
+        const selectedVoice = $("#voiceSelect").val();
+        const systemPrompt = $("#systemPrompt").val();
         const audioBlob = new Blob([audioData], { type: 'audio/wav' });
-        
-        // Send to Flask backend
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav');
+        formData.append('voice', selectedVoice);
+        formData.append('system_prompt', systemPrompt);
+        logActivity(`Using voice: ${selectedVoice}`);
         const response = await fetch('/process_audio', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'audio/wav'
-            },
-            body: audioBlob
+            body: formData
         });
         
         if (response.ok) {
             const contentType = response.headers.get('Content-Type');
             
             if (contentType && contentType.includes('audio/wav')) {
-                // Handle audio response
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
-                
-                // Create audio element and play response
                 const audioElement = new Audio(audioUrl);
                 audioElement.onloadedmetadata = () => {
                     logActivity(`Playing audio response (${Math.round(audioElement.duration)}s)`);
                 };
                 audioElement.play();
             } else {
-                // Handle text response (for backward compatibility or error messages)
                 const transcription = await response.text();
                 logActivity(`Response: ${transcription}`);
             }

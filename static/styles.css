@@ -48,5 +48,28 @@ button:disabled {
     border: 1px solid #ddd;
     border-radius: 5px;
     width: 80%;
+}
+.settings {
+    width: 80%;
+    margin: 15px 0;
+}
+.setting-row {
+    display: flex;
+    margin-bottom: 10px;
+    align-items: center;
+}
+.setting-row label {
+    width: 120px;
+    font-weight: bold;
+}
+.setting-row select, .setting-row textarea {
+    flex-grow: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+.setting-row textarea {
+    height: 60px;
+    resize: vertical;
     min-height: 100px;
 }

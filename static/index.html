@@ -14,6 +14,29 @@
         
         <div id="statusIndicator" class="status inactive">Microphone not active</div>
         
+        <div class="settings">
+            <div class="setting-row">
+                <label for="voiceSelect">Voice:</label>
+                <select id="voiceSelect">
+                    <option value="af_nicole">Nicole (American Female)</option>
+                    <option value="af_bella">Bella (American Female)</option>
+                    <option value="af_sarah">Sarah (American Female)</option>
+                    <option value="af_sky">Sky (American Female)</option>
+                    <option value="af">Default American Female</option>
+                    <option value="am_adam">Adam (American Male)</option>
+                    <option value="am_michael">Michael (American Male)</option>
+                    <option value="bf_emma">Emma (British Female)</option>
+                    <option value="bf_isabella" selected>Isabella (British Female)</option>
+                    <option value="bm_george">George (British Male)</option>
+                    <option value="bm_lewis">Lewis (British Male)</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label for="systemPrompt">System Prompt:</label>
+                <textarea id="systemPrompt">You are a helpful assistant.</textarea>
+            </div>
+        </div>
+        
         <button id="startButton" disabled>Start Listening</button>
         
         <div id="transcriptContainer">
