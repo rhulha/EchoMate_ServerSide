@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, Response
 import requests
 import torch
 import numpy as np
+import json
 from transformers import AutoProcessor, AutoModelForSpeechSeq2Seq
 from io import BytesIO
 import soundfile as sf
@@ -53,6 +54,12 @@ def process_audio():
         if request.content_type and 'multipart/form-data' in request.content_type:
             voice_name = request.form.get('voice', DEFAULT_VOICE)
             system_prompt = request.form.get('system_prompt', "You are a helpful assistant.")
+            conversation_history_json = request.form.get('conversation_history', '[]')
+            try:
+                conversation_history = json.loads(conversation_history_json)
+            except:
+                conversation_history = []
+            
             audio_file = request.files.get('audio')
             if not audio_file:
                 return Response("No audio file received", status=400)
@@ -64,6 +71,7 @@ def process_audio():
             return Response("No audio data received", status=400)
         
         print(f"Using voice: {voice_name}, System prompt: {system_prompt}")
+        print(f"Conversation history length: {len(conversation_history)}")
         float_data = np.frombuffer(audio_bytes, dtype=np.float32) # Convert bytes to float32 array
     except Exception as e:
         print(f"Error processing request: {str(e)}")
@@ -97,12 +105,19 @@ def process_audio():
         return Response(transcription, status=200, content_type='text/plain')
     
     try:
+        # Build messages array starting with system prompt
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add conversation history messages
+        if conversation_history and len(conversation_history) > 0:
+            messages.extend(conversation_history)
+        
+        # Add current user message
+        messages.append({"role": "user", "content": transcription})
+        
         payload = {
             "model": "local-model",
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": transcription}
-            ],
+            "messages": messages,
             "temperature": 0.7
         }
         
@@ -139,7 +154,17 @@ def process_audio():
             buffer = BytesIO()
             sf.write(buffer, audio, 22050, format='WAV')
             buffer.seek(0)
-            return Response(buffer.read(), status=200, content_type='audio/wav')
+            
+            # Create response with audio data
+            response = Response(buffer.read(), status=200, content_type='audio/wav')
+            
+            # Add the text response in the headers for the client to display
+            # URL encode to handle special characters and newlines
+            import urllib.parse
+            response.headers['X-Response-Text'] = urllib.parse.quote(response_text)
+            response.headers['X-User-Text'] = urllib.parse.quote(transcription)
+            
+            return response
         
         
         else:

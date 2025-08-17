@@ -37,9 +37,18 @@
             </div>
         </div>
         
-        <button id="startButton" disabled>Start Listening</button>
+        <div class="controls">
+            <button id="startButton" disabled>Start Listening</button>
+            <button id="clearConversationButton">Clear Conversation</button>
+        </div>
+        
+        <div class="conversation-container">
+            <h2>Conversation History</h2>
+            <div id="conversationHistory" class="conversation-history"></div>
+        </div>
         
         <div id="transcriptContainer">
+            <h2>Activity Log</h2>
             <p id="transcript">Voice activity will be logged here...</p>
         </div>
     </div>
