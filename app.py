@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, Response
 import requests
+import urllib.parse
 import torch
 import numpy as np
 import json
@@ -7,13 +8,18 @@ from transformers import AutoProcessor, AutoModelForSpeechSeq2Seq
 from io import BytesIO
 import soundfile as sf
 
-import os
+import os, re
+
 if os.name == "nt":  # Check if the OS is Windows
     os.environ["PHONEMIZER_ESPEAK_LIBRARY"] = r"C:\Program Files\eSpeak NG\libespeak-ng.dll"
     os.environ["PHONEMIZER_ESPEAK_PATH"] = r"C:\Program Files\eSpeak NG\espeak-ng.exe"
 
 from models import build_model
 from kokoro import generate
+from audio_utils import save_audio_as_wav
+
+# Debug flag to control audio saving functionality
+DEBUG_SAVE_AUDIO = False  # Set to False to disable saving audio files
 
 SAMPLE_RATE = 16000
 LLM_API_URL = "http://localhost:8080/v1/chat/completions"
@@ -64,6 +70,11 @@ def process_audio():
             if not audio_file:
                 return Response("No audio file received", status=400)
             audio_bytes = audio_file.read()
+            
+            if DEBUG_SAVE_AUDIO:
+                input_audio_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'input_audio', "input.wav")
+                actual_path = save_audio_as_wav(audio_bytes, input_audio_path, sample_rate=SAMPLE_RATE, add_timestamp=True)
+                print(f"Saved input audio to {actual_path}")
         else:
             return Response("Invalid audio data format", status=400)
 
@@ -145,7 +156,6 @@ def process_audio():
                     else:
                         voicepack = voice_cache[DEFAULT_VOICE]
             
-            import re
             # Remove Markdown formatting for better speech
             response_text = re.sub(r'\*\*(.*?)\*\*', r'\1', response_text)  # Bold
             response_text = re.sub(r'\*(.*?)\*', r'\1', response_text)      # Italic
@@ -162,25 +172,23 @@ def process_audio():
             sf.write(buffer, audio, 22050, format='WAV')
             buffer.seek(0)
             
-            # Create response with audio data
+            if DEBUG_SAVE_AUDIO:
+                response_audio_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'response_audio', "response.wav")
+                actual_path = save_audio_as_wav(audio, response_audio_path, sample_rate=22050, add_timestamp=True)
+                print(f"Saved response audio to {actual_path}")
+
+            buffer.seek(0)
             response = Response(buffer.read(), status=200, content_type='audio/wav')
-            
             # Add the text response in the headers for the client to display
             # URL encode to handle special characters and newlines
-            import urllib.parse
             response.headers['X-Response-Text'] = urllib.parse.quote(response_text)
             response.headers['X-User-Text'] = urllib.parse.quote(transcription)
-            
             return response
-        
-        
         else:
             return f"Error: Received status code {response.status_code} from LLM API"
             
     except Exception as e:
         return f"Error: Could not connect to LLM API: {str(e)}"
-
-    
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
